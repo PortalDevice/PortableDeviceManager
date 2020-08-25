@@ -64,6 +64,12 @@ namespace PortableDeviceManager.Windows
             }
         }
 
+        public DateTime LastModifiedTime {
+            get {
+                return new DirectoryInfo(FolderName()).LastWriteTime;
+            }
+        }
+
         public void DeleteAsync() {
             Task.Run(() => DeleteSync());
         }

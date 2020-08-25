@@ -78,7 +78,9 @@ namespace ConsoleDemo
             Console.WriteLine("2.  Traverse Portable Drive and Display folders and its files");
             Console.WriteLine("3.  List Files in a inputed folder");
             Console.WriteLine("4.  List All Images");
-            
+            Console.WriteLine("5.  Display the files number in a inputed folder");
+            Console.WriteLine("6.  Display the lastest file in a inputed folder");
+
             Console.WriteLine("x.  Exit");
             Console.Write("> ");
 
@@ -109,11 +111,19 @@ namespace ConsoleDemo
                 case "4":
                     EnumeratePhotos();
                     break;
+                case "5":
+                    DisplayFilesNumber();
+                    break;
+                case "6":
+                    DisplayLastFile();
+                    break;
                 case "x":
                 case "X":
                     Process.GetCurrentProcess().Kill();
                     break;
-            }            
+            }
+
+            DisplayMenu();
         }
         #endregion
 
@@ -140,7 +150,6 @@ namespace ConsoleDemo
             if (portable_drives.Count < 1)
                 Console.WriteLine("No Portable Drives connected");
 
-            DisplayMenu();
         }
         
         /// <summary>
@@ -156,7 +165,6 @@ namespace ConsoleDemo
                 short index = InputDriveIndex();
                 TraverseDrive(portable_drives[index], dump_file_count_only);
             }
-            DisplayMenu();
         }
 
         /// <summary>
@@ -194,8 +202,6 @@ namespace ConsoleDemo
                 DumpFiles(dest.Files,1);
             }
 
-            DisplayMenu();
-
         }
 
         /// <summary>
@@ -226,35 +232,89 @@ namespace ConsoleDemo
             {
                 //设置仅仅显示照片
                 listOnlyImage = true;
+                DateTime start = DateTime.Now;
                 TraverseFolder(dest, false, 0);
+                DateTime end = DateTime.Now;
                 listOnlyImage = false;
+                Console.WriteLine("The photos listing took " + (int)(end - start).TotalMilliseconds + " ms");
+
             }
             else
             {
                 Console.WriteLine("\n ## The folder ["+imageFolder+"] not found !");                
-            }
-                        
-            DisplayMenu();
+            }                        
         }
 
         /// <summary>
-        /// 遍历图库
+        /// 查询并显示设备中的照片数量
         /// </summary>
-        static void EnumerateAlbums()
+        static void DisplayFilesNumber()
         {
-            if (CheckDrivers() == false) return;
+            Console.WriteLine("\r\n----------------------------------------");
 
-            Console.WriteLine("Enumerating albums on a portable drive.");
-            Int16 index = InputDriveIndex();
+            if (CheckDrivers() == false) return;
+            short index = InputDriveIndex();
             IDrive drive = portable_drives[index];
 
-            var folders = drive.ParseFolder("/*/DCIM");
-            
-                foreach (var folder in folders.ChildFolders)
-                    Console.WriteLine(folder.Name + " - " + folder.Files.Count() + " files");
-            
+            Console.WriteLine("Please enter the name of the folder [" + imageFolder + "]:");
+            string str = Console.ReadLine();
+            if (str != "")
+                imageFolder = str;
+
+            IFolder dest = null;
+            //迭代查找目录
+            foreach (IFolder folder in drive.Folders)
+            {
+                dest = FindFolder(folder, imageFolder);
+                if (dest != null) break;
+            }
+
+            if (dest != null)
+            {
+                int n = GetFilesNumber(dest);
+                Console.WriteLine("The folder [" + imageFolder + "] has files : " + n+"\n");
+            }
+            else
+            {
+                Console.WriteLine("\n ## The folder [" + imageFolder + "] not found !");
+            }
         }
 
+        static void DisplayLastFile()
+        {
+            Console.WriteLine("\r\n----------------------------------------");
+
+            if (CheckDrivers() == false) return;
+            short index = InputDriveIndex();
+            IDrive drive = portable_drives[index];
+            
+            Console.WriteLine("Please enter the name of the folder [" + imageFolder + "]:");
+            string str = Console.ReadLine();
+            if (str != "")
+                imageFolder = str;
+
+            IFolder dest = null;
+            //迭代查找目录
+            foreach (IFolder folder in drive.Folders)
+            {
+                dest = FindFolder(folder, imageFolder);
+                if (dest != null) break;
+            }
+
+            if (dest != null)
+            {
+                FindLastFileInFolder(dest);
+                if (lastFile != null)
+                    Console.WriteLine("The last file : " + lastFile.FullPath 
+                        + "\t" + lastFile.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss:sss") + "\n");
+                else
+                    Console.WriteLine("#Maybe, no files in the folder.");
+            }
+            else
+            {
+                Console.WriteLine("\n ## The folder [" + imageFolder + "] not found !");
+            }
+        }
         #endregion
 
         #region 其它函数
@@ -275,6 +335,10 @@ namespace ConsoleDemo
             return true;
         }
 
+        /// <summary>
+        /// 输入设备序号,以便操作该设备
+        /// </summary>
+        /// <returns></returns>
         static Int16 InputDriveIndex()
         {
             string s;
@@ -313,7 +377,13 @@ namespace ConsoleDemo
             Directory.CreateDirectory(temp_dir);
             return temp_dir;
         }
-    static string FilesCountSuffix(IEnumerable<IFile> files)
+    
+        /// <summary>
+        /// 格式化文件数量
+        /// </summary>
+        /// <param name="files"></param>
+        /// <returns></returns>
+        static string FilesCountSuffix(IEnumerable<IFile> files)
         {
             var count = files.Count();
             var suffix = count > 0 ? " - " + count + " files" : "";
@@ -347,7 +417,7 @@ namespace ConsoleDemo
         static void TraverseFolder(IFolder folder, bool dump_file_count_only, int level)
         {
             var suffix = dump_file_count_only ? FilesCountSuffix(folder.Files) : "";
-            Console.WriteLine(new string(' ', level * 2) + "["+folder.Name +"]"+ suffix);
+            Console.WriteLine(new string(' ', level * 2) + "["+folder.Name +"] "+ suffix);
             if (!dump_file_count_only)
                 DumpFiles(folder.Files, level);
 
@@ -394,6 +464,45 @@ namespace ConsoleDemo
 
             return fi;
         }
+
+        /// <summary>
+        /// 遍历文件夹并统计文件数量
+        /// </summary>
+        /// <param name="folder">要遍历的文件夹</param>
+        /// <param name="level"></param>
+        static int GetFilesNumber(IFolder folder)
+        {
+            int n = 0;
+            n += folder.Files.Count();
+
+            //迭代遍历所有子目录中的文件数量
+            foreach (var child in folder.ChildFolders)
+                n+=GetFilesNumber(child);
+
+            return n;
+        }
+
+        static IFile lastFile;
+
+        /// <summary>
+        /// 寻找最新的文件
+        /// </summary>
+        /// <param name="folder">要遍历的文件夹</param>
+        /// <param name="dump_file_count_only">是否仅计算文件数</param>
+        /// <param name="level"></param>
+        static void FindLastFileInFolder(IFolder folder)
+        {
+            foreach (IFile fi in folder.Files)
+            {
+                if (lastFile == null) lastFile = fi;
+                else if (fi.LastWriteTime > lastFile.LastWriteTime) lastFile = fi;
+            }
+
+            //迭代遍历所有子目录中的文件数量
+            foreach (var child in folder.ChildFolders)
+                FindLastFileInFolder(child);
+        }
+
 
         // 1.2.4+ we have callbacks - called after each file is copied
         static void ExampleBulkCopyAllCameraPhotosTHdd()

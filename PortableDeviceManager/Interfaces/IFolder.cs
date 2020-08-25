@@ -28,6 +28,7 @@ namespace PortableDeviceManager.Interfaces
 
         // throws if there's an error
         void DeleteSync();
+
     }
 
     // this is not exposed - so that users only use IFile.copy() instead

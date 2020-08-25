@@ -16,7 +16,7 @@ namespace PortableDeviceManager.Portable
         public PortableFile(PortableDrive drive, FolderItem2 fi) {
             drive_ = drive;
             fi_ = fi;
-            Debug.Assert(!fi.IsFolder);
+            //Debug.Assert(!fi.IsFolder);
         }
 
         // for android_folder.copy

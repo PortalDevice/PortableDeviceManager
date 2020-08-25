@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -67,6 +68,8 @@ namespace PortableDeviceManager.Portable
                 return files_;
             }
         }
+
+
         public IEnumerable<IFolder> ChildFolders {
             get {
                 if (!enumerated_children_) {
