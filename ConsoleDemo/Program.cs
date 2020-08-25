@@ -18,7 +18,7 @@ namespace ConsoleDemo
     class Program
     {
         static List<IDrive> portable_drives;
-        static string CrreateTempPath()
+        static string CreateTempPath()
         {
             var temp_dir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\";
             if (Directory.Exists(temp_dir + "Temp"))
@@ -39,9 +39,13 @@ namespace ConsoleDemo
             catch (Exception e) { }
 
             foreach (var pd in portable_drives)
+            {
                 Console.WriteLine("Drive Unique ID: " + pd.UniqueId + ", friendly name=" + pd.FriendlyName
-                + ", type=" + pd.Type + ", available=" + pd.IsAvailable());
-            if (portable_drives.Count < 1)
+                + ", type=" + pd.Type + ", available=" + pd.IsAvailable()
+                +", RootName="+pd.RootName);
+                //pd.
+            }
+                if (portable_drives.Count < 1)
                 Console.WriteLine("No Portable Drives connected");
         }
 
@@ -123,7 +127,7 @@ namespace ConsoleDemo
             if (camera != null)
             {
                 DateTime start = DateTime.Now;
-                var temp = CrreateTempPath();
+                var temp = CreateTempPath();
                 Console.WriteLine("Copying to " + temp);
                 Bulk.BulkCopySync(camera.Files.ToList(), temp, (f, i, c) => {
                     Console.WriteLine(f + " to " + temp + "(" + (i + 1) + " of " + c + ")");
@@ -143,7 +147,7 @@ namespace ConsoleDemo
             var camera = PDManager.Instance.TryParseFolder("[a0]:/*/DCIM/107RICOH");
             if (camera != null)
             {
-                var temp = CrreateTempPath();
+                var temp = CreateTempPath();
                 DateTime start = DateTime.Now;
                 var files = camera.Files.ToList();
                 var idx = 0;
@@ -165,7 +169,7 @@ namespace ConsoleDemo
             var camera = PDManager.Instance.TryParseFolder("[a0]:/*/DCIM/107RICOH");
             if (camera != null)
             {
-                var temp = CrreateTempPath();
+                var temp = CreateTempPath();
                 var files = camera.Files.OrderBy(f => f.LastWriteTime).ToList();
                 if (files.Count > 0)
                 {
@@ -281,7 +285,7 @@ namespace ConsoleDemo
             Console.WriteLine("Waiting for you to make the device availble");
             while (true)
             {
-                var d = PDManager.Instance.TryGetDrive("[p0]:/");
+                var d = PDManager.Instance.GetDriveByUniqueId("[p0]:/");
                 if (d != null && d.IsAvailable())
                     break;
             }
@@ -304,7 +308,7 @@ namespace ConsoleDemo
 
             //ExampleCopyLatestPhotoToHdd();
             // ExampleFindBiggestPhotoInSize();
-            ExampleFindBiggestFileOnFirstPortableDevice();
+            //ExampleFindBiggestFileOnFirstPortableDevice();
 
             Console.WriteLine();
             Console.WriteLine("Press any key...");

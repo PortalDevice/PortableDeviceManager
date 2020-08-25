@@ -16,11 +16,15 @@ using Shell32;
 
 namespace PortableDeviceManager
 {
-    /* the root - the one that contains all external drives 
-     */
+    /// <summary>
+    /// Portable Device Manager Class
+    /// </summary>
     public class PDManager
     {
 
+        /// <summary>
+        /// Get the instance of this class
+        /// </summary>
         public static PDManager Instance { get; } = new PDManager();
 
         private bool AutoCloseWinDialogs_ = true;
@@ -68,8 +72,10 @@ namespace PortableDeviceManager
 
             new Thread(Win32Util.check_for_dialogs_thread) {IsBackground = true}.Start();
         }
-
-        // returns all drives, even the internal HDDs - you might need this if you want to copy a file onto an external drive
+        
+        /// <summary>
+        /// All portable drives, even the internal HDDs
+        /// </summary>
         public IReadOnlyList<IDrive> Drives {
             get { lock(this) return drives_; }
         }
@@ -161,7 +167,9 @@ namespace PortableDeviceManager
             }
         }
 
-
+        /// <summary>
+        /// If auto close the dialog
+        /// </summary>
         public bool AutoCloseWinDialogs {
             get { return AutoCloseWinDialogs_; }
             set {
@@ -174,6 +182,9 @@ namespace PortableDeviceManager
         // this includes all drives, even the internal ones
         private List<IDrive> drives_ = new List<IDrive>();
 
+        /// <summary>
+        /// Refresh portable drivers
+        /// </summary>
         public void Refresh() {
             List<IDrive> drives_now = new List<IDrive>();
             try {
@@ -202,7 +213,7 @@ namespace PortableDeviceManager
 
         // As drive name, use any of: 
         // "{<UniqueId>}:", "<drive-name>:", "[a<android-drive-index>]:", "[i<ios-index>]:", "[p<portable-index>]:", "[d<drive-index>]:"
-        public IDrive TryGetDrive(string drive_prefix) {
+        protected IDrive TryGetDrive(string drive_prefix) {
             drive_prefix = drive_prefix.Replace("/", "\\");
             // case insensitive
             foreach ( var d in drives_)
@@ -253,8 +264,29 @@ namespace PortableDeviceManager
 
             return null;
         }
+
+        /// <summary>
+        /// Get drive by unique id
+        /// </summary>
+        /// <param name="uid">The drive's unique id</param>
+        /// <returns></returns>
+        public IDrive GetDriveByUniqueId(string uid)
+        {
+            return this.TryGetDrive("{" + uid + "}:/");
+        }
+
+        /// <summary>
+        /// Get drive by drive name
+        /// </summary>
+        /// <param name="uid">The drive's unique id</param>
+        /// <returns></returns>
+        public IDrive GetDriveByDriveName(string name)
+        {
+            return this.TryGetDrive("<" + name + ">:/");
+        }
+
         // throws if drive not found
-        public IDrive get_drive(string drive_prefix) {
+        public IDrive GetDrive(string drive_prefix) {
             // case insensitive
             var d = TryGetDrive(drive_prefix);
             if ( d == null)
@@ -262,7 +294,7 @@ namespace PortableDeviceManager
             return d;
         }
 
-        private void split_into_drive_and_folder_path(string path, out string drive, out string folder_or_file) {
+        private void SplitIntoDriveAnd_FolderPath(string path, out string drive, out string folder_or_file) {
             path = path.Replace("/", "\\");
             var end_of_drive = path.IndexOf(":\\");
             if (end_of_drive >= 0) {
@@ -276,17 +308,17 @@ namespace PortableDeviceManager
         public IFile TryParseFile(string path) {
             // split into drive + path
             string drive_str, folder_or_file;
-            split_into_drive_and_folder_path(path, out drive_str, out folder_or_file);
+            SplitIntoDriveAnd_FolderPath(path, out drive_str, out folder_or_file);
             if (drive_str == null)
                 return null;
-            var drive = get_drive(drive_str);
+            var drive = GetDrive(drive_str);
             return drive.TryParseFile(folder_or_file);            
         }
 
         // returns null on failure
         public IFolder TryParseFolder(string path) {
             string drive_str, folder_or_file;
-            split_into_drive_and_folder_path(path, out drive_str, out folder_or_file);
+            SplitIntoDriveAnd_FolderPath(path, out drive_str, out folder_or_file);
             if ( drive_str == null)
                 return null;
             var drive = TryGetDrive(drive_str);
@@ -299,7 +331,7 @@ namespace PortableDeviceManager
         public IFile ParseFile(string path) {
             // split into drive + path
             string drive_str, folder_or_file;
-            split_into_drive_and_folder_path(path, out drive_str, out folder_or_file);
+            SplitIntoDriveAnd_FolderPath(path, out drive_str, out folder_or_file);
             if ( drive_str == null)
                 throw new PDException("invalid path " + path);
             var drive = TryGetDrive(drive_str);
@@ -311,20 +343,20 @@ namespace PortableDeviceManager
         // throws if anything goes wrong
         public IFolder ParseFolder(string path) {
             string drive_str, folder_or_file;
-            split_into_drive_and_folder_path(path, out drive_str, out folder_or_file);
+            SplitIntoDriveAnd_FolderPath(path, out drive_str, out folder_or_file);
             if ( drive_str == null)
                 throw new PDException("invalid path " + path);
-            var drive = get_drive(drive_str);
+            var drive = GetDrive(drive_str);
             return drive.ParseFolder(folder_or_file);
         }
 
         // creates all folders up to the given path
         public IFolder NewFolder(string path) {
             string drive_str, folder_or_file;
-            split_into_drive_and_folder_path(path, out drive_str, out folder_or_file);
+            SplitIntoDriveAnd_FolderPath(path, out drive_str, out folder_or_file);
             if ( drive_str == null)
                 throw new PDException("invalid path " + path);
-            var drive = get_drive(drive_str);
+            var drive = GetDrive(drive_str);
             return drive.CreateFolder(folder_or_file);
         }
 
