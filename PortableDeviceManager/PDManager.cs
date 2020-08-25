@@ -237,7 +237,7 @@ namespace PortableDeviceManager
                     drive_prefix = drive_prefix.Substring(1);
                     var idx = 0;
                     if (int.TryParse(drive_prefix, out idx)) {
-                        var android = drives_.Where(d => d.Type.is_android()).ToList();
+                        var android = drives_.Where(d => d.Type.IsAndroid()).ToList();
                         if (android.Count > idx)
                             return android[idx];
                     }                    
@@ -246,7 +246,7 @@ namespace PortableDeviceManager
                     drive_prefix = drive_prefix.Substring(1);
                     var idx = 0;
                     if (int.TryParse(drive_prefix, out idx)) {
-                        var ios = drives_.Where(d => d.Type.is_iOS()).ToList();
+                        var ios = drives_.Where(d => d.Type.IsIOS()).ToList();
                         if (ios.Count > idx)
                             return ios[idx];
                     }                    
@@ -255,7 +255,7 @@ namespace PortableDeviceManager
                     drive_prefix = drive_prefix.Substring(1);
                     var idx = 0;
                     if (int.TryParse(drive_prefix, out idx)) {
-                        var portable = drives_.Where(d => d.Type.is_portable()).ToList();
+                        var portable = drives_.Where(d => d.Type.IsPortable()).ToList();
                         if (portable.Count > idx)
                             return portable[idx];
                     }                    
@@ -294,7 +294,14 @@ namespace PortableDeviceManager
             return d;
         }
 
-        private void SplitIntoDriveAnd_FolderPath(string path, out string drive, out string folder_or_file) {
+
+        /// <summary>
+        /// Split the path into drive name and folder.
+        /// </summary>
+        /// <param name="path">Path string to split</param>
+        /// <param name="drive">Splited drive name</param>
+        /// <param name="folder_or_file">Splited folder or file</param>
+        private void SplitIntoDriveAndFolderPath(string path, out string drive, out string folder_or_file) {
             path = path.Replace("/", "\\");
             var end_of_drive = path.IndexOf(":\\");
             if (end_of_drive >= 0) {
@@ -308,7 +315,7 @@ namespace PortableDeviceManager
         public IFile TryParseFile(string path) {
             // split into drive + path
             string drive_str, folder_or_file;
-            SplitIntoDriveAnd_FolderPath(path, out drive_str, out folder_or_file);
+            SplitIntoDriveAndFolderPath(path, out drive_str, out folder_or_file);
             if (drive_str == null)
                 return null;
             var drive = GetDrive(drive_str);
@@ -318,7 +325,7 @@ namespace PortableDeviceManager
         // returns null on failure
         public IFolder TryParseFolder(string path) {
             string drive_str, folder_or_file;
-            SplitIntoDriveAnd_FolderPath(path, out drive_str, out folder_or_file);
+            SplitIntoDriveAndFolderPath(path, out drive_str, out folder_or_file);
             if ( drive_str == null)
                 return null;
             var drive = TryGetDrive(drive_str);
@@ -331,7 +338,7 @@ namespace PortableDeviceManager
         public IFile ParseFile(string path) {
             // split into drive + path
             string drive_str, folder_or_file;
-            SplitIntoDriveAnd_FolderPath(path, out drive_str, out folder_or_file);
+            SplitIntoDriveAndFolderPath(path, out drive_str, out folder_or_file);
             if ( drive_str == null)
                 throw new PDException("invalid path " + path);
             var drive = TryGetDrive(drive_str);
@@ -343,17 +350,30 @@ namespace PortableDeviceManager
         // throws if anything goes wrong
         public IFolder ParseFolder(string path) {
             string drive_str, folder_or_file;
-            SplitIntoDriveAnd_FolderPath(path, out drive_str, out folder_or_file);
+            SplitIntoDriveAndFolderPath(path, out drive_str, out folder_or_file);
             if ( drive_str == null)
                 throw new PDException("invalid path " + path);
             var drive = GetDrive(drive_str);
             return drive.ParseFolder(folder_or_file);
         }
+        
+        /// <summary>
+        /// Parse the folder in the drive
+        /// </summary>
+        /// <param name="drive">Drive to parse</param>
+        /// <param name="path">Path to parse</param>
+        /// <returns></returns>
+        public IFolder ParseFolder(IDrive drive,string path) {
+            //string folder_or_file;
+            //SplitIntoDriveAndFolderPath(path, out drive_str, out folder_or_file);
+            
+            return drive.ParseFolder(path);
+        }
 
         // creates all folders up to the given path
         public IFolder NewFolder(string path) {
             string drive_str, folder_or_file;
-            SplitIntoDriveAnd_FolderPath(path, out drive_str, out folder_or_file);
+            SplitIntoDriveAndFolderPath(path, out drive_str, out folder_or_file);
             if ( drive_str == null)
                 throw new PDException("invalid path " + path);
             var drive = GetDrive(drive_str);

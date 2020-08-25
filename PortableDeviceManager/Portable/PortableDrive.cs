@@ -106,7 +106,7 @@ namespace PortableDeviceManager.Portable
                     var items = (root_.GetFolder as Folder).Items();
                     var has_items = items.Count >= 1;
 
-                    if (drive_type_.is_iOS() && has_items) {
+                    if (drive_type_.IsIOS() && has_items) {
                         // iphone - even if connected, until we allow "Read/Write" files, it won't be available
                         // so, we might see "Internal Storage", but that will be completely empty
                         var dcim = TryParseFolder("*/dcim");
@@ -191,6 +191,12 @@ namespace PortableDeviceManager.Portable
             return f;
         }
 
+
+        /// <summary>
+        /// Parse folder and get all the sub folders.
+        /// </summary>
+        /// <param name="path">Path to parse.</param>
+        /// <returns></returns>
         public IFolder ParseFolder(string path) {
             var f = TryParseFolder(path);
             if (f == null)

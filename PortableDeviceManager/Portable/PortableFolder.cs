@@ -23,7 +23,7 @@ namespace PortableDeviceManager.Portable
         public PortableFolder(PortableDrive drive,FolderItem fi) {
             drive_ = drive;
             fi_ = fi;
-            Debug.Assert(fi.IsFolder);
+            //Debug.Assert(fi.IsFolder);
         }
 
         public string Name => fi_.Name;

@@ -33,14 +33,14 @@ namespace PortableDeviceManager.Interfaces
         CD_ROM,
     }
 
-    public static class drive_type_os {
-        public static bool is_android(this EnumDriveType dt) {
+    public static class DriveTypeOS {
+        public static bool IsAndroid(this EnumDriveType dt) {
             return dt == EnumDriveType.ANDROID_UNKNOWN 
                 || dt == EnumDriveType.ANDROID_PHONE 
                 || dt == EnumDriveType.ANDROID_TABLET;
         }
 
-        public static bool is_portable(this EnumDriveType dt) {
+        public static bool IsPortable(this EnumDriveType dt) {
             return dt == EnumDriveType.ANDROID_UNKNOWN 
                 || dt == EnumDriveType.ANDROID_PHONE 
                 || dt == EnumDriveType.ANDROID_TABLET 
@@ -50,10 +50,18 @@ namespace PortableDeviceManager.Interfaces
                 || dt == EnumDriveType.IOS_UNKNOWN;
         }
 
-        public static bool is_iOS(this EnumDriveType dt) {
+        public static bool IsIOS(this EnumDriveType dt) {
             return dt == EnumDriveType.IPHONE 
                 || dt == EnumDriveType.IPAD 
                 || dt == EnumDriveType.IOS_UNKNOWN;
+        }
+        public static bool IsInternalHDD(this EnumDriveType dt) {
+            return dt == EnumDriveType.INTERNAL_HDD;
+        }
+
+        public static bool IsExternalHDD(this EnumDriveType dt)
+        {
+            return dt == EnumDriveType.EXTERNAL_HDD;
         }
     };
 
